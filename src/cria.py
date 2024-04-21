@@ -40,12 +40,18 @@ def check_models(model, silence_output):
         return
 
     if not silence_output:
-        print(f"LLM model not found, downloading '{model}'...")
+        print(f"LLM model not found, searching '{model}'...")
 
     try:
-        ollama.pull(model)
+        progress = ollama.pull(model, stream=True)
+        print(
+            f"LLM model {model} found, downloading... (this will probably take a while)"
+        )
         if not silence_output:
+            for chunk in progress:
+                print(chunk)
             print(f"'{model}' downloaded, starting processes.")
+        return model
     except Exception as e:
         print(e)
         raise ValueError(
@@ -100,7 +106,7 @@ class Client(OllamaClient):
         ai = ollama
 
         for chunk in ai.generate(model=model, prompt=prompt, stream=True):
-            content = chunk["message"]["content"]
+            content = chunk["response"]
             yield content
 
     def generate(
@@ -114,7 +120,9 @@ class Client(OllamaClient):
         if stream:
             return self.generate_stream(prompt)
 
-        response = ai.generate(model=model, prompt=prompt, stream=False)
+        chunk = ai.generate(model=model, prompt=prompt, stream=False)
+        response = chunk["response"]
+
         return response
 
     def clear(self):
