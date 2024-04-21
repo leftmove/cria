@@ -1,58 +1,84 @@
+from contextlib import ContextDecorator
 from typing import Optional
 
 import psutil
 import atexit
 import subprocess
+import time
 
 from ollama._client import Client as OllamaClient
 import ollama
 
+from httpx import ConnectError
+
 DEFAULT_MODEL = "llama3:8b"
+DEFAULT_MESSAGE_HISTORY = [
+    {"role": "system", "content": "You are a helpful AI assistant."}
+]
 
 
 class Client(OllamaClient):
-    def chat(self, prompt: str, stream: Optional[bool] = True):
+    def chat_stream(self, messages):
+        model = self.model
+        ai = ollama
+
+        response = ""
+
+        for chunk in ai.chat(model=model, messages=messages, stream=True):
+            content = chunk["message"]["content"]
+            response += content
+            yield content
+
+        messages.append({"role": "assistant", "content": response})
+        self.messages = messages
+
+    def chat(
+        self,
+        prompt: str,
+        messages: Optional[list] = DEFAULT_MESSAGE_HISTORY,
+        stream: Optional[bool] = True,
+    ) -> str:
         model = self.model
         ai = ollama
 
         messages = getattr(
             self,
             "messages",
-            [{"role": "system", "content": "You are a helpful AI assistant."}],
+            messages,
         )
         messages.append({"role": "user", "content": prompt})
 
-        response = ""
-
         if stream:
-            for chunk in ai.chat(model=model, messages=messages, stream=stream):
-                content = chunk["message"]["content"]
-                response += content
-                yield content
-        else:
-            response = ai.chat(model=model, messages=messages, stream=stream)
-            response = response["message"]["content"]
+            return self.chat_stream(messages)
+
+        chunk = ai.chat(model=model, messages=messages, stream=stream)
+        response = "".join(chunk["message"]["content"])
 
         messages.append({"role": "assistant", "content": response})
         self.messages = messages
 
         return response
 
-    def generate(self, prompt: str, stream: Optional[bool] = True):
+    def generate_stream(self, prompt):
         model = self.model
         ai = ollama
 
-        response = ""
+        for chunk in ai.generate(model=model, prompt=prompt, stream=True):
+            content = chunk["message"]["content"]
+            yield content
+
+    def generate(
+        self,
+        prompt: str,
+        stream: Optional[bool] = True,
+    ) -> str:
+        model = self.model
+        ai = ollama
 
         if stream:
-            for chunk in ai.chat(
-                model=model, messages=[{"role": "user", "content": str}], stream=stream
-            ):
-                response += chunk
-                yield chunk
-        else:
-            response = ai.generate(model=model, prompt=prompt)
+            return self.generate_stream(prompt)
 
+        response = ai.generate(model=model, prompt=prompt, stream=False)
         return response
 
     def clear(self):
@@ -61,40 +87,51 @@ class Client(OllamaClient):
         ]
 
 
-class Cria(Client):
+class Model(Client, ContextDecorator):
     def __init__(
         self,
         model: Optional[str] = DEFAULT_MODEL,
-        log_output: Optional[bool] = False,
+        capture_output: Optional[bool] = False,
         run_subprocess: Optional[bool] = False,
         close_on_exit: Optional[bool] = False,
     ) -> None:
-        ollama_running = False
         process_name = "ollama"
+        ollama_pids = []
+        ollama_running = False
         for proc in psutil.process_iter():
             try:
                 if process_name.lower() in proc.name().lower():
-                    ollama_pid = proc.pid
+                    ollama_pids.append(proc.pid)
                     ollama_running = True
                     break
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
 
         if ollama_running:
-            self.ollama_process = psutil.Process(pid=ollama_pid)
+            self.ollama_pids = ollama_pids
         else:
-            self.ollama_process = None
+            self.ollama_pids = None
 
         if ollama_running and run_subprocess:
-            self.ollama_process.kill()
+            for ollama_pid in self.ollama_pids:
+                ollama_process = psutil.Process(pid=ollama_pid)
+                ollama_process.kill()
             ollama_running = False
 
         if not ollama_running:
-            ollama_stdout = subprocess.PIPE if log_output else subprocess.DEVNULL
-            ollama_stderr = subprocess.PIPE if log_output else subprocess.DEVNULL
+            ollama_stdout = subprocess.PIPE if capture_output else subprocess.DEVNULL
+            ollama_stderr = subprocess.PIPE if capture_output else subprocess.DEVNULL
             self.ollama_subrprocess = subprocess.Popen(
                 ["ollama", "serve"], stdout=ollama_stdout, stderr=ollama_stderr
             )
+            retries = 10
+            while retries:
+                try:
+                    ollama.list()
+                    break
+                except ConnectError:
+                    time.sleep(1)
+                    retries -= 1
         else:
             self.ollama_subrprocess = None
 
@@ -108,29 +145,12 @@ class Cria(Client):
         if close_on_exit:
             atexit.register(lambda: self.llm.kill())
 
-    class model(Client, object):
-        def __init_subclass__(
-            cls,
-            model: Optional[str] = DEFAULT_MODEL,
-            close_on_exit: Optional[bool] = True,
-        ) -> None:
-            cls.model = model
-            cls.llm = subprocess.Popen(
-                ["ollama", "run", model],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+    def __enter__(self):
+        return self
 
-            if close_on_exit:
-                atexit.register(lambda: cls.llm.kill())
-
-        def __exit__(cls):
-            llm = cls.llm
-            llm.kill()
-
-        def close(cls):
-            llm = cls.llm
-            llm.kill()
+    def __exit__(self, *exc):
+        llm = self.llm
+        llm.kill()
 
     def close(self):
         llm = self.llm
