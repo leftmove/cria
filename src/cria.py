@@ -135,8 +135,8 @@ class Cria(Client):
     def __init__(
         self,
         model: Optional[str] = DEFAULT_MODEL,
+        standalone: Optional[bool] = False,
         run_subprocess: Optional[bool] = False,
-        run_llm: Optional[bool] = True,
         capture_output: Optional[bool] = False,
         silence_output: Optional[bool] = False,
         close_on_exit: Optional[bool] = True,
@@ -194,7 +194,7 @@ class Cria(Client):
         model = check_models(model, silence_output)
         self.model = model
 
-        if run_llm:
+        if not standalone:
             self.llm = subprocess.Popen(
                 ["ollama", "run", model],
                 stdout=subprocess.DEVNULL,
@@ -204,7 +204,7 @@ class Cria(Client):
         if close_on_exit and self.ollama_subrprocess:
             atexit.register(lambda: self.ollama_subrprocess.kill())
 
-        if close_on_exit and run_llm:
+        if close_on_exit and not standalone:
             atexit.register(lambda: self.llm.kill())
 
     def output(self):
@@ -236,8 +236,8 @@ class Model(Cria, ContextDecorator):
         super().__init__(
             model=model,
             capture_output=capture_output,
-            run_subprocess=True if capture_output else False,
-            run_llm=False,
+            run_subprocess=False,
+            standalone=True,
             close_on_exit=close_on_exit,
         )
 

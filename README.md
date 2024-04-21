@@ -208,6 +208,36 @@ response = ai.generate(prompt, stream=False)
 print(response) # I apologize, but I think there may have been some confusion earlier. As this...
 ```
 
+### Running Standalone
+
+When you `cria.Cria()`, an `ollama` instance will start up if one is not already running. When the program exits, this instance will terminate.
+
+To prevent this behaviour, either run your own `ollama` instance in another terminal
+
+```bash
+ollama serve
+```
+
+or use the following code.
+
+```python
+ai = cria.Cria(standalone=True, close_on_exit=False)
+prompt = "Who is the CEO of OpenAI?"
+
+# Ollama will already be running.
+
+with cria.Model("llama2") as llama2:
+    response = llama2.generate("Who is the CEO of OpenAI?", stream=False)
+    print(response)
+
+with cria.Model("llama3") as llama3:
+    response = llama3.generate("Who is the CEO of OpenAI?", stream=False)
+    print(response)
+
+quit()
+# Olama will keep running, and will be used the next time this program starts.
+```
+
 ## Contributing
 
 If you have a feature request, feel free to make an issue!
