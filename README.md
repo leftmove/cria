@@ -212,7 +212,7 @@ print(response) # I apologize, but I think there may have been some confusion ea
 
 If you have a feature request, feel free to make an issue!
 
-Contibutions are highly appreciated.
+Contributions are highly appreciated.
 
 ## License
 
