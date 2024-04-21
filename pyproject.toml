@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "cria"
+version = "0.1.0"
+description = "Run AI locally with as little friction as possible."
+authors = ["leftmove"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+ollama = "^0.1.8"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
