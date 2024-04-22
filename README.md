@@ -5,9 +5,9 @@
     <em>Cria, use Python to run LLMs with as little friction as possible.</em>
 </p>
 
-Cria is a library for programatically running Large Language Models through Python. Cria is built so you need as little configuration as possible — even with more advanced features.
+Cria is a library for programmatically running Large Language Models through Python. Cria is built so you need as little configuration as possible — even with more advanced features.
 
-- **Easy**: No configuration is required out of the box. Defaults are built in, so getting started takes just five lines of code.
+- **Easy**: No configuration is required out of the box. Getting started takes just five lines of code.
 - **Concise**: Write less code to save time and avoid duplication.
 - **Efficient**: Use advanced features with your own `ollama` instance, or a subprocess.
 
@@ -29,7 +29,13 @@ Cria is a library for programatically running Large Language Models through Pyth
   - [Streams](#streams)
   - [Closing](#closing)
   - [Message History](#message-history)
+    - [Follow-Up](#follow-up)
+    - [Clear Message History](#clear-message-history)
+    - [Passing In Custom Context](#passing-in-custom-context)
   - [Multiple Models and Parallel Conversations](#multiple-models-and-parallel-conversations)
+    - [Models](#models)
+    - [With](#with-model)
+    - [Standalone](#standalone-model)
   - [Running Standalone](#running-standalone)
 - [Contributing](#contributing)
 - [License](#license)
@@ -47,13 +53,12 @@ prompt = "Who is the CEO of OpenAI?"
 for chunk in ai.chat(prompt):
     print(chunk, end="") # The CEO of OpenAI is Sam Altman!
 
-# Not required, but best practice.
-ai.close()
+ai.close() # Not required, but best practice.
 ```
 
-By default, Cria runs `llama3:8b`. If `llama3:8b` is not installed on your machine, Cria will install it automatically.
+If no model is configured, Cria runs the default model: `llama3:8b`. If the default model is not installed on your machine, Cria will install it automatically.
 
-**Important**: If the default model is not installed on your machine, downloading will take a while (`llama:8b` is about 4.7GB).
+**Important**: `llama:8b` is about **4.7GB**, and will likely take a while to download.
 
 ## Installation
 
@@ -83,7 +88,7 @@ By default, Cria runs `llama3:8b`. If `llama3:8b` is not installed on your machi
 
 ### Custom Models
 
-To run other LLM models, pass them into your `ai` variable.
+To run other LLMs, pass them into your `ai` variable.
 
 ```python
 import cria
@@ -115,9 +120,13 @@ By default, models are closed when you exit the Python program, but closing them
 ai.close()
 ```
 
+You can also use [`with`](#with-model) statements to close models automatically (recommended).
+
 ### Message History
 
-Message history is automatically saved in Cria, so asking followup questions is easy.
+#### Follow-Up
+
+Message history is automatically saved in Cria, so asking follow-up questions is easy.
 
 ```python
 prompt = "Who is the CEO of OpenAI?"
@@ -129,7 +138,9 @@ response = ai.chat(prompt, stream=False)
 print(response) # Sam Altman is an American entrepreneur and technologist who serves as the CEO of OpenAI...
 ```
 
-Clearing history is available as well.
+#### Clear Message History
+
+Clear history by running `the clear` method.
 
 ```python
 prompt = "Who is the CEO of OpenAI?"
@@ -142,6 +153,8 @@ prompt = "Tell me more about him."
 response = ai.chat(prompt, stream=False)
 print(response) # I apologize, but I don't have any information about "him" because the conversation just started...
 ```
+
+#### Passing In Custom Context
 
 You can also create a custom message history, and pass in your own context.
 
@@ -157,7 +170,7 @@ for chunk in ai.chat(messages=messages, prompt=prompt):
     print(chunk, end="") # AI System Optimization: Hybrid Approach Combining Reinforcement Learning and...
 ```
 
-In the example, instructions are given to the LLM and context is given as the user, before the user prompts. You can use any mixture of roles to specify the LLM to your liking.
+In the example, instructions are given to the LLM as the `system`. Then, extra context is given as the `user`. Finally, the prompt is entered (as a `user`). You can use any mixture of roles to specify the LLM to your liking.
 
 The available roles for messages are:
 
@@ -169,7 +182,9 @@ The prompt parameter will always be appended to messages under the `user` role, 
 
 ### Multiple Models and Parallel Conversations
 
-If you are running multiple models or parallel conversations, the `Model` class is also available. This is recommended for most usecases.
+#### Models
+
+If you are running multiple models or parallel conversations, the `Model` class is also available. This is recommended for most use cases.
 
 ```python
 import cria
@@ -182,6 +197,8 @@ print(response) # The CEO of OpenAI is Sam Altman.
 ```
 
 _All methods that apply to the `Cria` class also apply to `Model`._
+
+#### With Model
 
 Multiple models can be run through a `with` statement. This automatically closes them after use.
 
@@ -199,7 +216,9 @@ with cria.Model("llama2") as ai:
   print(response) # The CEO of OpenAI is Sam Altman.
 ```
 
-Or they can be run traditonally.
+#### Standalone Model
+
+Or, models can be run traditionally.
 
 ```python
 import cria
@@ -221,7 +240,9 @@ llama2.close()
 
 ```
 
-Cria can also has a `generate` method.
+### Generate
+
+Cria also has a `generate` method.
 
 ```python
 prompt = "Who is the CEO of OpenAI?"
@@ -235,15 +256,26 @@ print(response) # I apologize, but I think there may have been some confusion ea
 
 ### Running Standalone
 
-When you `cria.Cria()`, an `ollama` instance will start up if one is not already running. When the program exits, this instance will terminate.
+When you run `cria.Cria()`, an `ollama` instance will start up if one is not already running. When the program exits, this instance will terminate.
 
-To prevent this behaviour, either run your own `ollama` instance in another terminal
+To prevent this behavior, either run your own `ollama` instance in another terminal, or run a managed subprocess.
+
+#### Running Your Own Ollama Instance
 
 ```bash
 ollama serve
 ```
 
-or use the following code.
+```python
+ai = cria.Cria()
+prompt = "Who is the CEO of OpenAI?"
+
+with cria.Model("llama3") as llama3:
+    response = llama3.generate("Who is the CEO of OpenAI?", stream=False)
+    print(response)
+```
+
+#### Running A Managed Subprocess (Reccomended)
 
 ```python
 ai = cria.Cria(standalone=True, close_on_exit=False)
@@ -260,7 +292,7 @@ with cria.Model("llama3") as llama3:
     print(response)
 
 quit()
-# Olama will keep running, and will be used the next time this program starts.
+# Olama will keep running, and be used the next time this program starts.
 ```
 
 ## Contributing
