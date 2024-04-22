@@ -6,10 +6,9 @@ import atexit
 import subprocess
 import time
 
+from httpx import ConnectError, ReadError
 from ollama._client import Client as OllamaClient
 import ollama
-
-from httpx import ConnectError, ReadError
 
 DEFAULT_MODEL = "llama3:8b"
 DEFAULT_MESSAGE_HISTORY = [
@@ -76,19 +75,25 @@ class Client(OllamaClient):
 
     def chat(
         self,
-        prompt: str,
+        prompt: Optional[str] = None,
         messages: Optional[list] = DEFAULT_MESSAGE_HISTORY,
         stream: Optional[bool] = True,
     ) -> str:
         model = self.model
         ai = ollama
 
-        messages = getattr(
-            self,
-            "messages",
-            messages,
-        )
-        messages.append({"role": "user", "content": prompt})
+        if not prompt and not messages:
+            raise ValueError("You must pass in a prompt.")
+
+        if messages == DEFAULT_MESSAGE_HISTORY:
+            messages = getattr(
+                self,
+                "messages",
+                messages,
+            )
+
+        if prompt:
+            messages.append({"role": "user", "content": prompt})
 
         if stream:
             return self.chat_stream(messages)
@@ -218,7 +223,7 @@ class Cria(Client):
                 "You must pass in capture_ouput as True to capture output."
             )
 
-        return iter(lambda: ollama_subprocess.stdout.read(1), "")
+        return iter(c for c in iter(lambda: ollama_subprocess.stdout.read(1), b""))
 
     def close(self):
         llm = self.llm

@@ -30,12 +30,13 @@ Cria is a library for programatically running Large Language Models through Pyth
   - [Closing](#closing)
   - [Message History](#message-history)
   - [Multiple Models and Parallel Conversations](#multiple-models-and-parallel-conversations)
+  - [Running Standalone](#running-standalone)
 - [Contributing](#contributing)
 - [License](#license)
 
 ## Quickstart
 
-Running Cria is easy, after installation, you need just five lines of code.
+Running Cria is easy. After installation, you need just five lines of code — no configurations, no manual downloads, and no servers to worry about.
 
 ```python
 import cria
@@ -141,6 +142,30 @@ prompt = "Tell me more about him."
 response = ai.chat(prompt, stream=False)
 print(response) # I apologize, but I don't have any information about "him" because the conversation just started...
 ```
+
+You can also create a custom message history, and pass in your own context.
+
+```python
+context = "Our AI system employed a hybrid approach combining reinforcement learning and generative adversarial networks (GANs) to optimize the decision-making..."
+messages = [
+    {"role": "system", "content": "You are a technical documentation writer"},
+    {"role": "user", "content": context},
+]
+
+prompt = "Write some documentation using the text I gave you."
+for chunk in ai.chat(messages=messages, prompt=prompt):
+    print(chunk, end="") # AI System Optimization: Hybrid Approach Combining Reinforcement Learning and...
+```
+
+In the example, instructions are given to the LLM and context is given as the user, before the user prompts. You can use any mixture of roles to specify the LLM to your liking.
+
+The available roles for messages are:
+
+- `user` - Pass prompts as the user.
+- `system` - Give instructions as the system.
+- `assistant` - Act as the AI assistant yourself, and give the LLM lines.
+
+The prompt parameter will always be appended to messages under the `user` role, to override this, you can choose to pass in nothing for `prompt`.
 
 ### Multiple Models and Parallel Conversations
 
