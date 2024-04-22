@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/leftmove/cria"><img src="https://private-user-images.githubusercontent.com/73859069/324219993-741a3c07-da65-4e44-a967-e6e8dcb81920.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MTM2NjgxMTYsIm5iZiI6MTcxMzY2NzgxNiwicGF0aCI6Ii83Mzg1OTA2OS8zMjQyMTk5OTMtNzQxYTNjMDctZGE2NS00ZTQ0LWE5NjctZTZlOGRjYjgxOTIwLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNDA0MjElMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjQwNDIxVDAyNTAxNlomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTIyYTlhYzA0ODRkYTQ0ZmQ2MWIwMzc2NTRmYzYzNjA1MzdmNmI2ZDM2YTJiYTZlZGU3NmRkMDhjYTYzY2M1ZDEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JmFjdG9yX2lkPTAma2V5X2lkPTAmcmVwb19pZD0wIn0.Kd8z9Tyx1XwUOE-riu_zvYXA8D6U0KyKWLFXZNRVgGI" alt="cria"></a>
+  <a href="https://github.com/leftmove/cria"><img src="https://i.imgur.com/vjGJOLQ.png" alt="cria"></a>
 </p>
 <p align="center">
     <em>Cria, use Python to run LLMs with as little friction as possible.</em>
