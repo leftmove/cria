@@ -182,9 +182,12 @@ class Cria(Client):
         if not ollama_running:
             ollama_stdout = subprocess.PIPE if capture_output else subprocess.DEVNULL
             ollama_stderr = subprocess.PIPE if capture_output else subprocess.DEVNULL
-            self.ollama_subrprocess = subprocess.Popen(
+            try:
+                self.ollama_subrprocess = subprocess.Popen(
                 ["ollama", "serve"], stdout=ollama_stdout, stderr=ollama_stderr
             )
+            except FileNotFoundError:
+                raise FileNotFoundError("Ollama is not installed, please install ollama from 'https://ollama.com/download'")
             retries = 10
             while retries:
                 try:
