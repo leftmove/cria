@@ -56,6 +56,16 @@ for chunk in ai.chat(prompt):
 ai.close() # Not required, but best practice.
 ```
 
+Another example.
+
+```python
+import cria
+
+with cria.Model() as ai:
+  prompt = "Who is the CEO of OpenAI?"
+  response = ai.chat(prompt, stream=False) # The CEO of OpenAI is Sam Altman!
+```
+
 If no model is configured, Cria runs the default model: `llama3:8b`. If the default model is not installed on your machine, Cria will install it automatically.
 
 **Important**: `llama:8b` is about **4.7GB**, and will likely take a while to download.
