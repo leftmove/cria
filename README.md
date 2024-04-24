@@ -69,7 +69,7 @@ with cria.Model() as ai:
 
 If no model is configured, Cria runs the default model: `llama3:8b`. If the default model is not installed on your machine, Cria will install it automatically.
 
-**Important**: `llama:8b` is about **4.7GB**, and will likely take a while to download.
+**Important**: `llama3:8b` is about **4.7GB**, and will likely take a while to download.
 
 ## Installation
 
