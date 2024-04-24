@@ -55,7 +55,7 @@ for chunk in ai.chat(prompt):
 
 ai.close() # Not required, but best practice.
 ```
-or
+or, you can run this more configurable example.
 
 ```python
 import cria
