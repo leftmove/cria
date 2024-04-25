@@ -278,7 +278,7 @@ ollama serve
 
 ```python
 prompt = "Who is the CEO of OpenAI?"
-with cria.Model("llama3") as ai:
+with cria.Model() as ai:
     response = ai.generate("Who is the CEO of OpenAI?", stream=False)
     print(response)
 ```
