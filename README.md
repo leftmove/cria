@@ -268,7 +268,7 @@ print(response) # I apologize, but I think there may have been some confusion ea
 
 When you run `cria.Cria()`, an `ollama` instance will start up if one is not already running. When the program exits, this instance will terminate.
 
-To prevent this behavior, either run your own `ollama` instance in another terminal, or run a managed subprocess.
+However, if you want to save resources by not exiting `ollama`, either run your own `ollama` instance in another terminal, or run a managed subprocess.
 
 #### Running Your Own Ollama Instance
 
@@ -277,11 +277,9 @@ ollama serve
 ```
 
 ```python
-ai = cria.Cria()
 prompt = "Who is the CEO of OpenAI?"
-
-with cria.Model("llama3") as llama3:
-    response = llama3.generate("Who is the CEO of OpenAI?", stream=False)
+with cria.Model("llama3") as ai:
+    response = ai.generate("Who is the CEO of OpenAI?", stream=False)
     print(response)
 ```
 
