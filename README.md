@@ -150,7 +150,7 @@ print(response) # Sam Altman is an American entrepreneur and technologist who se
 
 #### Clear Message History
 
-Clear history by running `the clear` method.
+You can reset message history by running the `clear` method.
 
 ```python
 prompt = "Who is the CEO of OpenAI?"
