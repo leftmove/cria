@@ -36,7 +36,7 @@ def check_models(model, silence_output):
         (True if m.get("name") == model else False for m in model_list), False
     )
     if model_match:
-        return
+        return model
 
     if not silence_output:
         print(f"LLM model not found, searching '{model}'...")
