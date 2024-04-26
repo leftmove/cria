@@ -51,9 +51,10 @@ ai = cria.Cria()
 
 prompt = "Who is the CEO of OpenAI?"
 for chunk in ai.chat(prompt):
-    print(chunk, end="") # The CEO of OpenAI is Sam Altman!
-
-ai.close() # Not required, but best practice.
+    print(chunk, end="")
+```
+```
+The CEO of OpenAI is Sam Altman!
 ```
 or, you can run this more configurable example.
 
@@ -63,7 +64,10 @@ import cria
 with cria.Model() as ai:
   prompt = "Who is the CEO of OpenAI?"
   response = ai.chat(prompt, stream=False)
-  print(response) # The CEO of OpenAI is Sam Altman!
+  print(response)
+```
+```
+The CEO of OpenAI is Sam Altman!
 ```
 
 If no model is configured, Cria runs the default model: `llama3:8b`. If the default model is not installed on your machine, Cria will install it automatically.
