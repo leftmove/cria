@@ -6,14 +6,90 @@ import atexit
 import subprocess
 import time
 
-from httpx import ConnectError, ReadError
-from ollama._client import Client as OllamaClient
 import ollama
+import httpx
+
+from ollama._client import Client as OllamaClient
 
 DEFAULT_MODEL = "llama3:8b"
 DEFAULT_MESSAGE_HISTORY = [
     {"role": "system", "content": "You are a helpful AI assistant."}
 ]
+
+
+class Client(OllamaClient):
+    def chat_stream(self, messages, **kwargs):
+        model = self.model
+        ai = ollama
+
+        response = ""
+
+        for chunk in ai.chat(model=model, messages=messages, stream=True, **kwargs):
+            content = chunk["message"]["content"]
+            response += content
+            yield content
+
+        messages.append({"role": "assistant", "content": response})
+        self.messages = messages
+
+    def chat(
+        self,
+        prompt: Optional[str] = None,
+        messages: Optional[list] = DEFAULT_MESSAGE_HISTORY,
+        stream: Optional[bool] = True,
+        **kwargs,
+    ) -> str:
+        model = self.model
+        ai = ollama
+
+        if not prompt and not messages:
+            raise ValueError("You must pass in a prompt.")
+
+        if messages == DEFAULT_MESSAGE_HISTORY:
+            messages = getattr(
+                self,
+                "messages",
+                messages,
+            )
+
+        if prompt:
+            messages.append({"role": "user", "content": prompt})
+
+        if stream:
+            return self.chat_stream(messages, **kwargs)
+
+        chunk = ai.chat(model=model, messages=messages, stream=False, **kwargs)
+        response = "".join(chunk["message"]["content"])
+
+        messages.append({"role": "assistant", "content": response})
+        self.messages = messages
+
+        return response
+
+    def generate_stream(self, prompt, **kwargs):
+        model = self.model
+        ai = ollama
+
+        for chunk in ai.generate(model=model, prompt=prompt, stream=True, **kwargs):
+            content = chunk["response"]
+            yield content
+
+    def generate(self, prompt: str, stream: Optional[bool] = True, **kwargs) -> str:
+        model = self.model
+        ai = ollama
+
+        if stream:
+            return self.generate_stream(prompt)
+
+        chunk = ai.generate(model=model, prompt=prompt, stream=False, **kwargs)
+        response = chunk["response"]
+
+        return response
+
+    def clear(self):
+        self.messages = [
+            {"role": "system", "content": "You are a helpful AI assistant."}
+        ]
 
 
 def check_models(model, silence_output):
@@ -58,82 +134,19 @@ def check_models(model, silence_output):
         )
 
 
-class Client(OllamaClient):
-    def chat_stream(self, messages):
-        model = self.model
-        ai = ollama
-
-        response = ""
-
-        for chunk in ai.chat(model=model, messages=messages, stream=True):
-            content = chunk["message"]["content"]
-            response += content
-            yield content
-
-        messages.append({"role": "assistant", "content": response})
-        self.messages = messages
-
-    def chat(
-        self,
-        prompt: Optional[str] = None,
-        messages: Optional[list] = DEFAULT_MESSAGE_HISTORY,
-        stream: Optional[bool] = True,
-    ) -> str:
-        model = self.model
-        ai = ollama
-
-        if not prompt and not messages:
-            raise ValueError("You must pass in a prompt.")
-
-        if messages == DEFAULT_MESSAGE_HISTORY:
-            messages = getattr(
-                self,
-                "messages",
-                messages,
-            )
-
-        if prompt:
-            messages.append({"role": "user", "content": prompt})
-
-        if stream:
-            return self.chat_stream(messages)
-
-        chunk = ai.chat(model=model, messages=messages, stream=stream)
-        response = "".join(chunk["message"]["content"])
-
-        messages.append({"role": "assistant", "content": response})
-        self.messages = messages
-
-        return response
-
-    def generate_stream(self, prompt):
-        model = self.model
-        ai = ollama
-
-        for chunk in ai.generate(model=model, prompt=prompt, stream=True):
-            content = chunk["response"]
-            yield content
-
-    def generate(
-        self,
-        prompt: str,
-        stream: Optional[bool] = True,
-    ) -> str:
-        model = self.model
-        ai = ollama
-
-        if stream:
-            return self.generate_stream(prompt)
-
-        chunk = ai.generate(model=model, prompt=prompt, stream=False)
-        response = chunk["response"]
-
-        return response
-
-    def clear(self):
-        self.messages = [
-            {"role": "system", "content": "You are a helpful AI assistant."}
-        ]
+def find_process(command, process_name="ollama"):
+    process = None
+    for proc in psutil.process_iter(attrs=["cmdline"]):
+        try:
+            if process_name.lower() in proc.name().lower():
+                proc_command = proc.info["cmdline"]
+                if proc_command[: len(command)] != command:
+                    continue
+                process = psutil.Process(pid=proc.pid)
+                break
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return process
 
 
 class Cria(Client):
@@ -151,63 +164,51 @@ class Cria(Client):
         self.silence_output = silence_output
         self.close_on_exit = close_on_exit
 
-        process_name = "ollama"
-        ollama_pids = []
-        ollama_running = False
-        for proc in psutil.process_iter():
-            try:
-                if process_name.lower() in proc.name().lower():
-                    ollama_pids.append(proc.pid)
-                    ollama_running = True
-                    break
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
+        ollama_process = find_process(["ollama", "serve"])
+        self.ollama_process = ollama_process
 
-        if ollama_running:
-            self.ollama_pids = ollama_pids
-        else:
-            self.ollama_pids = None
-
-        if ollama_running and run_subprocess:
-            for ollama_pid in self.ollama_pids:
-                ollama_process = psutil.Process(pid=ollama_pid)
-                ollama_process.kill()
-            ollama_running = False
+        if ollama_process and run_subprocess:
+            self.ollama_process.kill()
 
         try:
             ollama.list()
-        except (ConnectError, ReadError):
-            ollama_running = False
+        except (httpx.ConnectError, httpx.ReadError):
+            ollama_process = None
 
-        if not ollama_running:
+        if not ollama_process:
             ollama_stdout = subprocess.PIPE if capture_output else subprocess.DEVNULL
             ollama_stderr = subprocess.PIPE if capture_output else subprocess.DEVNULL
             try:
                 self.ollama_subrprocess = subprocess.Popen(
-                ["ollama", "serve"], stdout=ollama_stdout, stderr=ollama_stderr
-            )
+                    ["ollama", "serve"], stdout=ollama_stdout, stderr=ollama_stderr
+                )
             except FileNotFoundError:
-                raise FileNotFoundError("Ollama is not installed, please install ollama from 'https://ollama.com/download'")
+                raise FileNotFoundError(
+                    "Ollama is not installed, please install ollama from 'https://ollama.com/download'"
+                )
             retries = 10
             while retries:
                 try:
                     ollama.list()
                     break
-                except (ConnectError, ReadError):
+                except (httpx.ConnectError, httpx.ReadError):
                     time.sleep(2)
                     retries -= 1
         else:
             self.ollama_subrprocess = None
 
-        model = check_models(model, silence_output)
-        self.model = model
+        self.model = check_models(model, silence_output)
 
         if not standalone:
-            self.llm = subprocess.Popen(
-                ["ollama", "run", model],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
+            self.llm = find_process(["ollama", "run", self.model])
+
+            if self.llm and run_subprocess:
+                self.llm.kill()
+                self.llm = subprocess.Popen(
+                    ["ollama", "run", self.model],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
 
         if close_on_exit and self.ollama_subrprocess:
             atexit.register(lambda: self.ollama_subrprocess.kill())
@@ -237,6 +238,8 @@ class Model(Cria, ContextDecorator):
     def __init__(
         self,
         model: Optional[str] = DEFAULT_MODEL,
+        run_attached: Optional[bool] = False,
+        run_subprocess: Optional[bool] = False,
         capture_output: Optional[bool] = False,
         silence_output: Optional[bool] = False,
         close_on_exit: Optional[bool] = True,
@@ -253,11 +256,30 @@ class Model(Cria, ContextDecorator):
         self.silence_output = silence_output
         self.close_on_exit = close_on_exit
 
-        llm_stdout = subprocess.PIPE if capture_output else subprocess.DEVNULL
-        llm_stderr = subprocess.PIPE if capture_output else subprocess.DEVNULL
-        self.llm = subprocess.Popen(
-            ["ollama", "run", model], stdout=llm_stdout, stderr=llm_stderr
-        )
+        self.model = check_models(model, silence_output)
+
+        if run_attached and run_subprocess:
+            raise ValueError(
+                "You cannot run attach to an LLM and run it as a subprocess at the same time."
+            )
+
+        if not run_attached:
+            llm_stdout = subprocess.PIPE if capture_output else subprocess.DEVNULL
+            llm_stderr = subprocess.PIPE if capture_output else subprocess.DEVNULL
+            self.llm = subprocess.Popen(
+                ["ollama", "run", self.model], stdout=llm_stdout, stderr=llm_stderr
+            )
+        else:
+            self.llm = find_process(["ollama", "run", self.model])
+
+        if self.llm and run_subprocess:
+            self.llm.kill()
+
+            llm_stdout = subprocess.PIPE if capture_output else subprocess.DEVNULL
+            llm_stderr = subprocess.PIPE if capture_output else subprocess.DEVNULL
+            self.llm = subprocess.Popen(
+                ["ollama", "run", self.model], stdout=llm_stdout, stderr=llm_stderr
+            )
 
         if close_on_exit:
             atexit.register(lambda: self.llm.kill())
