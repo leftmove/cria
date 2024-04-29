@@ -1,6 +1,6 @@
 [project]
 name = "cria"
-version = "1.6.1"
+version = "1.6.2"
 authors = [{ name = "leftmove", email = "100anonyo@gmail.com" }]
 description = "Run AI locally with as little friction as possible"
 readme = "README.md"
@@ -17,7 +17,7 @@ Issues = "https://github.com/leftmove/cria/issues"
 
 [tool.poetry]
 name = "cria"
-version = "1.6.1"
+version = "1.6.2"
 description = "Run AI locally with as little friction as possible."
 authors = ["leftmove"]
 license = "MIT"
