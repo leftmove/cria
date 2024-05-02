@@ -32,6 +32,9 @@ Cria is a library for programmatically running Large Language Models through Pyt
     - [Follow-Up](#follow-up)
     - [Clear Message History](#clear-message-history)
     - [Passing In Custom Context](#passing-in-custom-context)
+  - [Interrupting](#interrupting)
+    - [With Message History](#with-message-history)
+    - [Without Message History](#without-message-history)
   - [Multiple Models and Parallel Conversations](#multiple-models-and-parallel-conversations)
     - [Models](#models)
     - [With](#with-model)
@@ -53,9 +56,11 @@ prompt = "Who is the CEO of OpenAI?"
 for chunk in ai.chat(prompt):
     print(chunk, end="")
 ```
+
 ```
 >>> The CEO of OpenAI is Sam Altman!
 ```
+
 or, you can run this more configurable example.
 
 ```python
@@ -66,6 +71,7 @@ with cria.Model() as ai:
   response = ai.chat(prompt, stream=False)
   print(response)
 ```
+
 ```
 >>> The CEO of OpenAI is Sam Altman!
 ```
@@ -193,6 +199,64 @@ The available roles for messages are:
 - `assistant` - Act as the AI assistant yourself, and give the LLM lines.
 
 The prompt parameter will always be appended to messages under the `user` role, to override this, you can choose to pass in nothing for `prompt`.
+
+### Interrupting
+
+#### With Message History
+
+If you are streaming messages with Cria, you can interrupt the prompt mid way.
+
+```python
+response = ""
+max_token_length = 5
+
+prompt = "Who is the CEO of OpenAI?"
+for i, chunk in enumerate(ai.chat(prompt)):
+
+  if i >= max_token_length:
+    ai.stop()
+
+  print(chunk, end="") # The CEO of OpenAI is
+```
+
+```python
+response = ""
+max_token_length = 5
+
+prompt = "Who is the CEO of OpenAI?"
+for i, chunk in enumerate(ai.generate(prompt)):
+
+  if i >= max_token_length:
+    ai.stop()
+
+  print(chunk, end="") # The CEO of OpenAI is
+```
+
+In the examples, after the AI generates five tokens (units of text that are usually a couple of characters long), text generation is stopped via the `stop` method. After `stop` is called, you can safely `break` out of the `for` loop.
+
+#### Without Message History
+
+By default, Cria automatically saves responses in message history, even if the stream is interrupted. To prevent this behaviour though, you can pass in the `allow_interruption` boolean.
+
+```python
+ai = cria.Cria(allow_interruption=False)
+
+response = ""
+max_token_length = 5
+
+prompt = "Who is the CEO of OpenAI?"
+for i, chunk in enumerate(ai.chat(prompt)):
+
+  if i >= max_token_length:
+    ai.stop()
+    break
+
+  print(chunk, end="") # The CEO of OpenAI is
+
+prompt = "Tell me more about him."
+for chunk in ai.chat(prompt):
+  print(chunk, end="") # I apologize, but I don't have any information about "him" because the conversation just started...
+```
 
 ### Multiple Models and Parallel Conversations
 
