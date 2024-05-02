@@ -26,8 +26,8 @@ class Client(OllamaClient):
         self.running = True
 
         for chunk in ai.chat(model=model, messages=messages, stream=True, **kwargs):
-            if self.stop:
-                if self.allow_interruptions:
+            if self.stop_stream:
+                if self.allow_interruption:
                     messages.append({"role": "assistant", "content": response})
                 self.running = False
                 return
@@ -40,9 +40,11 @@ class Client(OllamaClient):
         messages.append({"role": "assistant", "content": response})
         self.messages = messages
 
+    stop_stream = False
+
     def stop(self):
         if self.running:
-            self.stop = True
+            self.stop_stream = True
         else:
             raise ValueError("No active chat stream to stop.")
 
@@ -84,9 +86,18 @@ class Client(OllamaClient):
         model = self.model
         ai = ollama
 
+        response = ""
+        self.running = True
+
         for chunk in ai.generate(model=model, prompt=prompt, stream=True, **kwargs):
+            if self.stop_stream:
+                self.running = False
+                return
             content = chunk["response"]
+            response += content
             yield content
+
+        self.running = False
 
     def generate(self, prompt: str, stream: Optional[bool] = True, **kwargs) -> str:
         model = self.model
@@ -218,8 +229,11 @@ class Cria(Client):
         if not standalone:
             self.llm = find_process(["ollama", "run", self.model])
 
-            if self.llm and run_subprocess:
+            if run_subprocess and self.llm:
                 self.llm.kill()
+                self.llm = None
+
+            if not self.llm:
                 self.llm = subprocess.Popen(
                     ["ollama", "run", self.model],
                     stdout=subprocess.DEVNULL,
@@ -231,6 +245,8 @@ class Cria(Client):
 
         if close_on_exit and not standalone:
             atexit.register(lambda: self.llm.kill())
+
+    messages = DEFAULT_MESSAGE_HISTORY
 
     def output(self):
         ollama_subprocess = self.ollama_subrprocess
@@ -256,6 +272,7 @@ class Model(Cria, ContextDecorator):
         model: Optional[str] = DEFAULT_MODEL,
         run_attached: Optional[bool] = False,
         run_subprocess: Optional[bool] = False,
+        allow_interruption: Optional[bool] = True,
         capture_output: Optional[bool] = False,
         silence_output: Optional[bool] = False,
         close_on_exit: Optional[bool] = True,
@@ -269,6 +286,7 @@ class Model(Cria, ContextDecorator):
         )
 
         self.capture_output = capture_output
+        self.allow_interruption = allow_interruption
         self.silence_output = silence_output
         self.close_on_exit = close_on_exit
 
