@@ -23,14 +23,28 @@ class Client(OllamaClient):
         ai = ollama
 
         response = ""
+        self.running = True
 
         for chunk in ai.chat(model=model, messages=messages, stream=True, **kwargs):
+            if self.stop:
+                if self.allow_interruptions:
+                    messages.append({"role": "assistant", "content": response})
+                self.running = False
+                return
             content = chunk["message"]["content"]
             response += content
             yield content
 
+        self.running = False
+
         messages.append({"role": "assistant", "content": response})
         self.messages = messages
+
+    def stop(self):
+        if self.running:
+            self.stop = True
+        else:
+            raise ValueError("No active chat stream to stop.")
 
     def chat(
         self,
@@ -156,6 +170,7 @@ class Cria(Client):
         standalone: Optional[bool] = False,
         run_subprocess: Optional[bool] = False,
         capture_output: Optional[bool] = False,
+        allow_interruption: Optional[bool] = True,
         silence_output: Optional[bool] = False,
         close_on_exit: Optional[bool] = True,
     ) -> None:
@@ -163,6 +178,7 @@ class Cria(Client):
         self.capture_output = capture_output
         self.silence_output = silence_output
         self.close_on_exit = close_on_exit
+        self.allow_interruption = allow_interruption
 
         ollama_process = find_process(["ollama", "serve"])
         self.ollama_process = ollama_process
