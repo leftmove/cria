@@ -212,11 +212,11 @@ max_token_length = 5
 
 prompt = "Who is the CEO of OpenAI?"
 for i, chunk in enumerate(ai.chat(prompt)):
-
   if i >= max_token_length:
     ai.stop()
+  response += chunk
 
-  print(chunk, end="") # The CEO of OpenAI is
+print(response) # The CEO of OpenAI is
 ```
 
 ```python
@@ -225,11 +225,11 @@ max_token_length = 5
 
 prompt = "Who is the CEO of OpenAI?"
 for i, chunk in enumerate(ai.generate(prompt)):
-
   if i >= max_token_length:
     ai.stop()
+  response += chunk
 
-  print(chunk, end="") # The CEO of OpenAI is
+print(response) # The CEO of OpenAI is
 ```
 
 In the examples, after the AI generates five tokens (units of text that are usually a couple of characters long), text generation is stopped via the `stop` method. After `stop` is called, you can safely `break` out of the `for` loop.
