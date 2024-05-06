@@ -77,9 +77,8 @@ with cria.Model() as ai:
 >>> The CEO of OpenAI is Sam Altman!
 ```
 
-If no model is configured, Cria runs the default model: `llama3:8b`. If the default model is not installed on your machine, Cria will install it automatically.
-
-**Important**: `llama3:8b` is about **4.7GB**, and will likely take a while to download.
+> [!WARNING]
+> If no model is configured, Cria automatically installs and runs the default model: `llama3:8b` (4.7GB).
 
 ## Installation
 
