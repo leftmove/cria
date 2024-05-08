@@ -41,6 +41,7 @@ Cria is a library for programmatically running Large Language Models through Pyt
     - [With](#with-model)
     - [Standalone](#standalone-model)
   - [Running Standalone](#running-standalone)
+  - [Formatting](#formatting)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -370,6 +371,22 @@ with cria.Model("llama3") as llama3:
 quit()
 # Olama will keep running, and be used the next time this program starts.
 ```
+
+#### Formatting
+
+To format the output of the LLM, pass in the format keyword.
+
+```python
+ai = cria.Cria(format="json")
+
+prompt = "Return a JSON array of AI companies."
+response = ai.chat(prompt, stream=False)
+print(response) # ["OpenAI", "Anthropic", "Meta", "Google", "Cohere", ...].
+```
+
+The current supported formats are:
+
+* JSON 
 
 ## Contributing
 
