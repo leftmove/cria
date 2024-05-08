@@ -372,15 +372,15 @@ quit()
 # Olama will keep running, and be used the next time this program starts.
 ```
 
-#### Formatting
+### Formatting
 
 To format the output of the LLM, pass in the format keyword.
 
 ```python
-ai = cria.Cria(format="json")
+ai = cria.Cria()
 
 prompt = "Return a JSON array of AI companies."
-response = ai.chat(prompt, stream=False)
+response = ai.chat(prompt, stream=False, format="json")
 print(response) # ["OpenAI", "Anthropic", "Meta", "Google", "Cohere", ...].
 ```
 
