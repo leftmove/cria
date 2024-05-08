@@ -9,7 +9,7 @@ Cria is a library for programmatically running Large Language Models through Pyt
 
 - **Easy**: No configuration is required out of the box. Getting started takes just five lines of code.
 - **Concise**: Write less code to save time and avoid duplication.
-- **Local**: Free and unobstructed by rate limits, running LLMs requires no internet connection
+- **Local**: Free and unobstructed by rate limits, running LLMs requires no internet connection.
 - **Efficient**: Use advanced features with your own `ollama` instance, or a subprocess.
 
 <!-- <p align="center">
