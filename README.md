@@ -355,10 +355,12 @@ with cria.Model() as ai:
 #### Running A Managed Subprocess (Reccomended)
 
 ```python
+
+# If it is the first time you start the program, ollama will start automatically
+# If it is the second time (or subsequent times) you run the program, ollama will already be running
+
 ai = cria.Cria(standalone=True, close_on_exit=False)
 prompt = "Who is the CEO of OpenAI?"
-
-# Ollama will already be running.
 
 with cria.Model("llama2") as llama2:
     response = llama2.generate("Who is the CEO of OpenAI?", stream=False)
@@ -369,7 +371,7 @@ with cria.Model("llama3") as llama3:
     print(response)
 
 quit()
-# Olama will keep running, and be used the next time this program starts.
+# Despite exiting, olama will keep running, and be used the next time this program starts.
 ```
 
 ### Formatting
