@@ -79,7 +79,7 @@ with cria.Model() as ai:
 ```
 
 > [!WARNING]
-> If no model is configured, Cria automatically installs and runs the default model: `llama3:8b` (4.7GB).
+> If no model is configured, Cria automatically installs and runs the default model: `llama3.1:8b` (4.7GB).
 
 ## Installation
 
