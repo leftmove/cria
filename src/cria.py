@@ -11,7 +11,7 @@ import httpx
 
 from ollama._client import Client as OllamaClient
 
-DEFAULT_MODEL = "llama3:8b"
+DEFAULT_MODEL = "llama3.1:8b"
 DEFAULT_MESSAGE_HISTORY = [
     {"role": "system", "content": "You are a helpful AI assistant."}
 ]
