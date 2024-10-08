@@ -163,7 +163,7 @@ def find_process(command, process_name="ollama"):
     process = None
     for proc in psutil.process_iter(attrs=["cmdline"]):
         try:
-            if process_name.lower() in proc.name().lower():
+            if process_name.lower() in proc.name().lower() and proc.info["cmdline"] is not None:
                 proc_command = proc.info["cmdline"]
                 if proc_command[: len(command)] != command:
                     continue
