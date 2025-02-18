@@ -68,13 +68,19 @@ or, you can run this more configurable example.
 ```python
 import cria
 
-with cria.Model() as ai:
+with cria.Model("llama3.1:8b") as ai:
+  prompt = "Who is the CEO of OpenAI?"
+  response = ai.chat(prompt, stream=False)
+  print(response)
+
+with cria.Model("llama3:8b") as ai:
   prompt = "Who is the CEO of OpenAI?"
   response = ai.chat(prompt, stream=False)
   print(response)
 ```
 
 ```
+>>> The CEO of OpenAI is Sam Altman.
 >>> The CEO of OpenAI is Sam Altman!
 ```
 
