@@ -211,7 +211,7 @@ The prompt parameter will always be appended to messages under the `user` role, 
 
 #### With Message History
 
-If you are streaming messages with Cria, you can interrupt the prompt mid way.
+If you are streaming messages with Cria, you can interrupt the prompt mid-way.
 
 ```python
 response = ""
@@ -226,20 +226,7 @@ for i, chunk in enumerate(ai.chat(prompt)):
 print(response) # The CEO of OpenAI is
 ```
 
-```python
-response = ""
-max_token_length = 5
-
-prompt = "Who is the CEO of OpenAI?"
-for i, chunk in enumerate(ai.generate(prompt)):
-  if i >= max_token_length:
-    ai.stop()
-  response += chunk
-
-print(response) # The CEO of OpenAI is
-```
-
-In the examples, after the AI generates five tokens (units of text that are usually a couple of characters long), text generation is stopped via the `stop` method. After `stop` is called, you can safely `break` out of the `for` loop.
+In the example, after the AI generates five tokens (units of text that LLMs use for compression), text generation is stopped via the `stop` method. After `stop` is called, you can safely `break` out of the `for` loop.
 
 #### Without Message History
 
